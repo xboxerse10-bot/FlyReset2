@@ -28,13 +28,26 @@ jobs:
         with:
           gradle-version: '9.8.2'
 
+      - name: Find Gradle project
+        id: project
+        shell: bash
+        run: |
+          FILE=$(find . -maxdepth 5 -type f \( -name 'build.gradle' -o -name 'build.gradle.kts' \) | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "ERROR: Nu exista build.gradle in repository!"
+            exit 1
+          fi
+          DIR=$(dirname "$FILE")
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "Found Gradle project in $DIR"
+
       - name: Build FlyReset
-        working-directory: Flyreset
-        run: gradle build --no-daemon
+        shell: bash
+        run: gradle -p "${{ steps.project.outputs.dir }}" build --no-daemon
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: FlyReset-2.0-Fabric-26.3
-          path: Flyreset/build/libs/flyreset-2.0.0.jar
+          path: '**/build/libs/flyreset-2.0.0.jar'
           if-no-files-found: error
